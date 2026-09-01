@@ -1,0 +1,21 @@
+{
+  "name": "KivDrop",
+  "short_name": "KivDrop",
+  "description": "Pair two browsers and transfer files directly.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3f0e8",
+  "theme_color": "#d24726",
+  "categories": [
+    "utilities",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

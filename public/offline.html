@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#f3f0e8" />
+    <title>KivDrop is offline</title>
+    <style>
+      :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+      body { align-items: center; background: #f3f0e8; color: #1b1d19; display: flex; margin: 0; min-height: 100vh; }
+      main { border-top: 3px solid #d24726; margin: auto; max-width: 560px; padding: 32px 20px; }
+      h1 { font-family: Georgia, serif; font-size: 2.4rem; font-weight: 500; margin: 0 0 16px; }
+      p { color: #62645d; line-height: 1.6; }
+      button { background: #d24726; border: 0; border-radius: 6px; color: white; font: inherit; font-weight: 700; min-height: 46px; padding: 10px 18px; }
+      @media (prefers-color-scheme: dark) { body { background: #181a17; color: #f0ece2; } p { color: #aaa99f; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>EVERYSHARE</p>
+      <h1>The app shell is available, but transfers need a connection.</h1>
+      <p>Reconnect this device to reach the signaling service and establish a peer-to-peer route.</p>
+      <button onclick="location.reload()">Try again</button>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,270 @@
+# Build EveryShare — a Real Cross-Device File Transfer Web App
+
+You are working inside the EveryShare repository. Design and implement a production-minded cross-device file-sharing web application that lets two browser devices send files directly to each other.
+
+Treat `DESIGN_GUIDELINES.md` as the governing design and quality standard for this project. Read it before changing code and apply it throughout the implementation. If a visual shortcut, generic template pattern, or decorative feature conflicts with usability, working behavior, accessibility, or the guideline, choose the more useful and credible solution.
+
+## Product Goal
+
+EveryShare should make this flow feel nearly effortless:
+
+1. Open the site on two devices.
+2. Select files on the sending device.
+3. Pair the devices with a six-digit code, QR code, or share link.
+4. Review and approve the transfer on both devices.
+5. Transfer the actual bytes and show truthful live progress.
+6. Download the files and display a useful transfer summary.
+
+Support photos, videos, audio, PDFs, archives, documents, and arbitrary file types. Basic transfers must work without an account. Prefer direct WebRTC peer-to-peer delivery; use a realtime server only for signaling. Never pretend a transfer happened, animate fake progress, or add a control with no behavior.
+
+## Product Identity and Visual Direction
+
+Use the name **EveryShare**. Create a simple original mark, wordmark treatment, favicon, and coherent visual system. Do not imitate the branding or exact interface of AirDrop, Quick Share, SHAREit, Dropbox, Linear, Arc, or Raycast.
+
+The interface should feel calm, capable, and physical—closer to placing an item within someone's reach than operating a cloud-storage dashboard.
+
+- Build the layout around a distinctive **transfer field**: two device endpoints connected by a restrained path that changes with the real connection state.
+- Use a warm neutral canvas, near-black text, one saturated signal color, and one restrained status palette. Avoid default blue-purple gradients, neon glow, glassmorphism, and ornamental background blobs.
+- Use typography with a practical editorial character. Keep headings direct and naturally sized; do not use oversized landing-page slogans that consume most of the viewport.
+- Use thin rules, spatial grouping, alignment, and changes in type scale before reaching for cards. Do not wrap every section or file in a floating rounded rectangle.
+- Keep corner radii restrained and purposeful. Buttons, inputs, panels, badges, and images should not all share the same pill shape.
+- Give transfer states a clear visual rhythm: quiet while idle, focused while pairing, directional while transferring, and resolved at completion.
+- Motion should explain state or direction. Respect reduced-motion preferences and avoid continuous animation that adds no information.
+- On small screens, prioritize the current action, selected files, connection status, and primary control. Compose a genuine mobile layout rather than shrinking the desktop page.
+
+Use specific interface writing. Prefer labels such as “Choose files,” “Create transfer,” “Copy pairing link,” and “Try direct connection again.” Avoid vague promotional phrases, unsupported security guarantees, fabricated usage numbers, testimonials, and filler FAQs.
+
+## Required Routes
+
+Implement these routes with useful content and working navigation:
+
+- `/` — concise product introduction with clear Send and Receive actions
+- `/send` — file selection and transfer-session creation
+- `/receive` — code entry, shared-link handling, and QR scanning where supported
+- `/transfer/[sessionId]` — pairing, approval, connection, transfer, recovery, and completion states
+- `/history` — local metadata-only history with a clear-history action
+- `/settings` — device, theme, notification, sound, download, and privacy preferences
+- `/privacy` — accurate explanation of storage, signaling, direct transfer, relay limitations, and collected data
+- `/about` — concise product purpose and technical approach
+
+Do not create empty or placeholder routes. Secondary routes can remain deliberately concise, but everything visible must be accurate and usable.
+
+## Sender Flow
+
+1. Let users drag files onto the page on desktop or open the native file picker on any device.
+2. Display each selected file with a safe name, type, formatted size, and preview only when supported.
+3. Allow individual removal and show total file count and total transfer size.
+4. Create a temporary transfer session only when the user continues.
+5. Generate a cryptographically random session token, an expiring six-digit connection code, a QR code, and a copyable pairing URL.
+6. Show “Ready to share” with the session's expiry and honest connection status.
+7. When a receiver joins, show its friendly device name and require explicit sender approval or rejection.
+8. Transfer all selected files with real byte-based progress.
+9. Show per-file and total progress, bytes transferred, total bytes, current speed, and an estimate that does not jump erratically.
+10. Support pause, resume, cancel, reconnection, and retry where the underlying connection permits them.
+11. Finish with file count, total size, elapsed time, average speed, and actions to send more or leave the room.
+
+## Receiver Flow
+
+Allow a receiver to join by:
+
+- entering a validated six-digit code;
+- opening the session's shared URL; or
+- scanning its QR code with the browser camera after explicit permission.
+
+Before transfer, show the sender's temporary device name and the actual file manifest, including file names, types, sizes, and safe previews where possible. Require receiver acceptance. During transfer, show truthful progress and recovery options. After completion, download files in a browser-compatible way; when automatic multi-file download is restricted, make the limitation clear and provide individual download actions.
+
+## Real Transfer Requirements
+
+Implement a genuine end-to-end transfer between two browser contexts or devices.
+
+- Use WebRTC `RTCDataChannel` for file bytes whenever a peer connection can be established.
+- Use WebSocket or Socket.IO only to exchange session events, SDP offers and answers, and ICE candidates.
+- Configure STUN through environment variables and make TURN credentials configurable for restrictive networks.
+- Keep the architecture ready for a future temporary encrypted relay, but do not claim relay support if it is not implemented.
+- Split files into bounded chunks; begin with a measured chunk size in the 256 KiB–1 MiB range.
+- Do not read an entire large file into memory or keep file blobs in React state.
+- Honor `bufferedAmount` and `bufferedAmountLowThreshold` for backpressure.
+- Use a transfer queue and explicit chunk/file metadata so multiple files remain ordered and verifiable.
+- Derive progress from acknowledged or received bytes, never from a timer.
+- Make cancellation close readers, release object URLs, clear pending buffers, and notify the peer.
+- Clean up WebRTC connections, signaling sockets, event listeners, timers, streams, and temporary URLs when a room expires or a component unmounts.
+- Document the exact semantics and current limitations of pause, resume, reconnection, and retry. Do not imply that interrupted browser sessions can resume if that persistence is not truly implemented.
+
+Design for multi-gigabyte transfers even if practical browser and device limits remain. Keep the interface responsive during large transfers and avoid unnecessary component rerenders.
+
+## Session and State Model
+
+Represent the transfer lifecycle explicitly, using a discriminated union or similarly safe state model. Cover at least:
+
+- `IDLE`
+- `SELECTING_FILES`
+- `CREATING_SESSION`
+- `WAITING_FOR_RECEIVER`
+- `CONNECTING`
+- `AWAITING_APPROVAL`
+- `CONNECTED`
+- `TRANSFERRING`
+- `PAUSED`
+- `COMPLETED`
+- `FAILED`
+- `CANCELLED`
+- `EXPIRED`
+
+The UI must reflect the actual state. Prevent impossible actions such as starting before approval, accepting twice, or pausing a completed transfer.
+
+Define clear TypeScript models for concepts such as `TransferSession`, `PeerDevice`, `TransferFile`, `TransferProgress`, `ConnectionState`, and `TransferState`. Keep session signaling, peer-connection management, file chunking, queueing, progress calculation, QR pairing, device identity, history, and UI concerns in separate focused modules.
+
+## Nearby Devices
+
+Give each browser a locally stored, editable friendly name derived from browser/device information without exposing an IP address.
+
+You may show nearby devices only when there is a technically valid discovery mechanism. Ordinary web browsers cannot reliably discover arbitrary devices on the local network, so do not simulate nearby devices or imply discovery that does not exist. QR codes, pairing codes, and shared links are the dependable pairing methods for the MVP.
+
+## Security and Privacy
+
+- Require HTTPS in production and a secure signaling transport.
+- Use cryptographically secure random session identifiers and tokens.
+- Make codes short-lived, single-session, rate-limited, and resistant to brute-force guessing.
+- Expire sessions after ten minutes of inactivity unless configuration says otherwise.
+- Require explicit sender and receiver approval by default. Auto-accept must remain off unless a user knowingly enables it.
+- Validate signaling messages and all user input on both the appropriate client and server boundaries.
+- Sanitize displayed file metadata; never execute, render as HTML, or trust an incoming file name or MIME type.
+- Do not store transferred file contents on the signaling server in peer-to-peer mode.
+- Store transfer history locally and include metadata only—never file contents or secret session tokens.
+- Do not collect personal data that the application does not need.
+- Apply appropriate rate limits, origin checks, request-size limits, expiry cleanup, and safe error responses.
+- Explain that WebRTC transport is encrypted, but do not make stronger end-to-end privacy claims than the implementation supports.
+
+Use accurate messages such as “No account required” and “Files are sent directly when a peer-to-peer connection is available.” Avoid absolute claims like “completely anonymous,” “unhackable,” or “your files never touch a server” unless the deployed architecture can prove them.
+
+## Error and Recovery Design
+
+Handle and visibly distinguish:
+
+- malformed, unknown, or expired codes;
+- room capacity and duplicate joins;
+- sender or receiver rejection;
+- peer disconnection and network changes;
+- signaling failure;
+- WebRTC negotiation, ICE, or data-channel failure;
+- browser incompatibility;
+- camera absence or denied permission;
+- file read/write failure;
+- cancellation, room expiry, and partial transfer failure.
+
+Give each state a useful next action such as retrying the connection, re-entering the code, creating a fresh session, returning to the manifest, or downloading completed files. Do not expose raw stack traces or internal identifiers to users.
+
+## History and Settings
+
+Keep optional transfer history in browser storage. Record date, direction, peer device name, file count, total size, duration, and final status. Provide a working clear-history action with confirmation. Never store file contents.
+
+Settings should include:
+
+- editable device name;
+- auto-accept, off by default with a privacy warning;
+- automatic-download behavior where the browser supports it;
+- notifications and sound preferences;
+- light, dark, and system themes;
+- privacy controls and clear-history action.
+
+Persist settings locally and make every exposed setting affect behavior. Omit any setting that cannot be implemented honestly.
+
+## Responsive, Accessible, and Cross-Browser Behavior
+
+Target current Chrome, Edge, Firefox, Safari, Android Chrome, and iOS Safari. Feature-detect APIs and explain limitations without blocking unrelated features.
+
+- Use semantic HTML and an ordered heading hierarchy.
+- Support complete keyboard operation and strong visible focus styles.
+- Label file inputs, code inputs, icon controls, transfer status, and progress for assistive technology.
+- Announce important connection and completion changes without flooding a screen reader with every progress update.
+- Meet WCAG AA color contrast and do not rely on color alone.
+- Honor reduced-motion and relevant user contrast preferences.
+- Keep touch targets practical and account for safe areas on mobile devices.
+- Support drag and drop as an enhancement, not the only selection method.
+
+## PWA
+
+Make EveryShare installable with a valid web manifest, appropriate icons, theme metadata, and a service worker or framework-supported equivalent. Cache only a safe application shell and static assets. Do not cache transferred files, secret pairing data, or private room responses. Explain that active transfers still require connectivity between peers and access to signaling infrastructure.
+
+## Technical Direction
+
+First inspect the existing repository, package configuration, and conventions. Reuse working choices already present. If the repository is empty or does not constrain the stack, use:
+
+- Next.js with the App Router
+- React and TypeScript in strict mode
+- Tailwind CSS for the visual system
+- a small set of accessible primitives; use shadcn/ui selectively rather than composing the entire interface from stock components
+- Framer Motion only for stateful motion that CSS cannot express clearly
+- a Node-compatible Socket.IO or WebSocket signaling service
+- WebRTC DataChannel for peer transfer
+- client-side QR generation and scanning
+- local browser storage for settings and transfer metadata
+
+Avoid adding PostgreSQL or Redis to the initial MVP unless the implemented signaling deployment genuinely requires them. An in-memory session store is acceptable for local development and a single instance, but document its horizontal-scaling and restart limitations.
+
+Use shared design tokens for color, typography, spacing, borders, radii, shadows, and motion. Keep dependencies purposeful. Remove unused generated components, demo data, placeholder assets, console noise, excessive comments, and duplicated logic.
+
+## Build Order
+
+Prioritize a thin, working vertical slice before breadth:
+
+1. Inspect and establish the app, visual tokens, core types, and state model.
+2. Implement file selection, manifest review, validation, and removal.
+3. Implement expiring signaling sessions, codes, links, and QR generation.
+4. Implement receiver joining and two-sided approval.
+5. Establish a WebRTC connection through signaling.
+6. Transfer one real file in chunks with backpressure and truthful progress.
+7. Add multiple-file queueing, completion, downloads, and cleanup.
+8. Add pause, cancel, retry, disconnect recovery, and clear error states to the extent they genuinely work.
+9. Finish responsive behavior, accessibility, settings, local history, privacy content, and PWA support.
+10. Test two-context and two-device transfer flows, production builds, and relevant failure cases.
+
+Do not spend time polishing a broad static site while the main Send → Pair → Approve → Transfer → Download path is incomplete.
+
+## Acceptance Criteria
+
+The implementation is complete only when:
+
+- two browser contexts can pair using a real code or shared link;
+- QR pairing encodes and opens the same valid session URL;
+- both peers review and approve before file bytes are sent;
+- at least one real file, followed by multiple files, transfers through a WebRTC data channel;
+- displayed progress is calculated from actual bytes;
+- received files can be downloaded intact with correct names and sizes;
+- invalid and expired sessions produce useful recovery UI;
+- disconnect, cancellation, and cleanup behavior has been exercised;
+- the key flow works at narrow mobile and desktop widths;
+- keyboard, focus, status announcements, contrast, and reduced motion have been reviewed;
+- production builds and relevant automated checks pass;
+- no core control is decorative or backed by simulated behavior;
+- privacy and security statements match the implementation's actual capabilities;
+- the interface follows `DESIGN_GUIDELINES.md` and does not look like a generic AI-generated component showcase.
+
+## Testing
+
+Add tests in proportion to the implementation:
+
+- unit tests for code validation, expiry, state transitions, file-size formatting, chunk sequencing, and progress calculations;
+- integration tests for signaling-session creation, joining, approval, rejection, and expiry;
+- end-to-end coverage for the main flow in two browser contexts where practical;
+- manual instructions for testing between two physical devices on the same network and across different networks with TURN configured;
+- a production build and lint/type checks.
+
+Do not claim a scenario was tested unless it was actually run. Clearly list untested browser or network cases.
+
+## Final Handoff
+
+When implementation is finished, provide:
+
+1. a concise summary of what works;
+2. the important project structure and module responsibilities;
+3. setup and local-run commands;
+4. all required and optional environment variables;
+5. how session signaling, WebRTC negotiation, chunking, backpressure, progress, and downloads work;
+6. how to test with two tabs, two browsers, and two physical devices;
+7. production deployment instructions for both the web app and signaling service;
+8. the security and privacy controls implemented;
+9. honest browser, hosting, NAT traversal, memory, file-size, reconnection, and multi-instance limitations;
+10. checks and tests run, including any failures or areas not verified.
+
+Make reasonable in-scope decisions without repeatedly asking for approval. If a missing product choice would materially alter architecture, privacy, cost, or deployment, state the assumption clearly before proceeding. The final result should feel authored for EveryShare: direct, dependable, privacy-conscious, and quietly distinctive.
