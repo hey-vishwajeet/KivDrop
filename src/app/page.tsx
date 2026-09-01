@@ -12,7 +12,7 @@ export default function HomePage() {
             Pair two browsers with a short code or private link. KivDrop sends the bytes over a direct, encrypted WebRTC connection whenever the network allows it.
           </p>
           <div className="hero-actions">
-            <Link className="button button--primary" href="/send">Choose files <ArrowRightIcon /></Link>
+            <Link className="button button--primary" href="/send">Send files <ArrowRightIcon /></Link>
             <Link className="button button--secondary" href="/receive">Receive files</Link>
           </div>
           <div className="trust-line" aria-label="Product facts">
