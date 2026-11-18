@@ -659,6 +659,41 @@ h3 {
   font-size: 14px;
 }
 
+.footer-files {
+  position: relative;
+}
+
+.footer-files summary {
+  font-size: 14px;
+  list-style: none;
+}
+
+.footer-files summary::-webkit-details-marker {
+  display: none;
+}
+
+.footer-files__menu {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  bottom: 30px;
+  display: grid;
+  gap: 4px;
+  min-width: 220px;
+  padding: 8px;
+  position: absolute;
+  right: 0;
+  box-shadow: 0 14px 38px rgb(27 29 25 / .14);
+}
+
+.footer-files__menu a {
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.footer-files__menu a:hover {
+  background: var(--canvas);
+}
+
 .page-heading {
   border-bottom: 1px solid var(--line);
   margin-bottom: 36px;

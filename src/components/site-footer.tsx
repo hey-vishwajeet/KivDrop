@@ -12,6 +12,17 @@ export function SiteFooter() {
         </div>
         <nav aria-label="Footer navigation">
           <Link href="/privacy">Privacy</Link>
+          <details className="footer-files">
+            <summary>File</summary>
+            <div className="footer-files__menu">
+              <a href="/ai-lab-manual-2026-27.pdf" download>
+                AI Lab Manual 2026-27
+              </a>
+              <a href="/cc-lab-manual-2026-27.pdf" download>
+                CC Lab Manual 2026-27
+              </a>
+            </div>
+          </details>
           <Link href="/about">About</Link>
         </nav>
       </div>
